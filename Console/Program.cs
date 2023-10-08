@@ -11,11 +11,13 @@ class Program
             Console.WriteLine("holero");
             string input = Console.ReadLine();
             var list = Compiler.Lexer.TokensInit(input);
-            foreach (var token in list)
-            {
-                Console.WriteLine(token.ToString());
-            }
-            Console.ReadKey();
+            Node node = Parser.Parse(list);
+            Console.WriteLine(node.GetValue().ToString());
+            //foreach (var token in list)
+            //{
+             //   Console.WriteLine(token.ToString());
+            //}
+            //Console.ReadKey();
         }
     }
 }

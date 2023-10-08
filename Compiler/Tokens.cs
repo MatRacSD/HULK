@@ -11,8 +11,18 @@ public class Token
     {
         return Type + "{" + Content + "}";
     }
+
+/// <summary>
+/// retorna 
+/// </summary>
+/// <returns></returns>
+    
+
+    public bool IsTerminal;
     public string? Type;
     public string? Content;
+
+    public List<Token>?  exp;
 }
 
 public static class Lexer
@@ -26,7 +36,7 @@ public static class Lexer
         {
             if(input[i]== '"')
             {
-                if(state == "Sstring")
+                if(state == "strings")
                 {
                     currentToken.Content += '"';
                     tlist.Add(currentToken);
@@ -36,12 +46,12 @@ public static class Lexer
                 }
                 else 
                 {
-                    currentToken = new Token{Type = "Sstring", Content = input[i].ToString()};
-                    state = "Sstring";
+                    currentToken = new Token{Type = "strings", Content = ""};
+                    state = "strings";
                     continue;
                 }
             }
-            else if (state == "Sstring")
+            else if (state == "strings")
             {
                 currentToken.Content += input[i];
                 continue;
@@ -51,11 +61,11 @@ public static class Lexer
             {
                 if(state == "none")
                 {
-                    currentToken = new Token{Type = "string" , Content = input[i].ToString()};
-                    state = "string";
+                    currentToken = new Token{Type = "iden" , Content = input[i].ToString()};
+                    state = "iden";
                 }
 
-                else if(state == "string")
+                else if(state == "iden")
                 {
                     currentToken.Content = currentToken.Content + input[i];
                 }
@@ -63,8 +73,8 @@ public static class Lexer
                 else if (state == "Symbol" || state == "Operator" || state == "Parnt")
                 {
                     tlist.Add(currentToken);
-                    currentToken = new Token{Type = "string" , Content = input[i].ToString() };
-                    state = "string";
+                    currentToken = new Token{Type = "iden" , Content = input[i].ToString() };
+                    state = "iden";
 
                 }
                 else if (state== "number" )
@@ -94,7 +104,7 @@ public static class Lexer
                     state = "number";
 
                 }
-                else if (state== "string" )
+                else if (state== "iden" )
                 {
                     string token = currentToken.Content;
                     currentToken = new Token{Type = "LEXICAL ERROR:" + token + " INVALID TOKEN" };

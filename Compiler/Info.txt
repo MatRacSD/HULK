@@ -1,0 +1,19 @@
+NOTA: Me quede trabajando en el en Parser en la parte donde se analizaba si era un operador
+Tipos de tokens:
+-Operador
+-number
+-iden
+-strings
+-Parnt (parentesis)
+-none
+-error
+Bugs:
+-Al iniciar un token del tipo Sstring se almacena dentro del contenido del token el primer ".
+Implementado:
+-Analisis Léxico.
+-Operador Suma, resta .
+NO Implementado:
+-Analisis Sintactico.
+-Analisis Semantico.
+SE NECESITA CAMBIAR:
+-Los tokens identificadores no pueden empezar con un numero pero si pueden tener numeros y guiones bajos.
