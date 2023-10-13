@@ -14,7 +14,7 @@ class Program
             
           var asd1 = Function.ActiveFunctions;
 
-            Console.WriteLine("holero");
+            
             string input = Console.ReadLine();
             var list = Lexer.TokensInit(input);
             var l2 = Lexer.GetToken2(list);
