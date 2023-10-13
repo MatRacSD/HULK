@@ -1,251 +1,133 @@
+using System.Security.Principal;
+using System.Reflection.Metadata;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using Microsoft.VisualBasic;
 
 namespace Compiler
 {
     public static class Parser
     {
-        public static Node Parse(List<Token> tokens)
+        public static Node Parse(List<Token> tokens, int startlevel)
         {
-            //se recorre la lista de tokens en busca de tokens de primer nivel
-            Node node = null;
-             int p = 0;
-            for (int i = 0; i < tokens.Count; i++)
-            {
-                //se verifica que no se este tomando terminos que esten dentro de parentesis.
-               
-                if(tokens[i].Content == "(")
-                p += 1;
-                else if (tokens[i].Content == ")")
-                {
-                    p -= 1;
-                }
-                
-                if(LV1.Contains(tokens[i].Content) && p == 0 )
-                {
-                    List<Token> l1 = new List<Token>();
-                    for (int j = 0; j < i; j++)
-                    {
-                        l1.Add(tokens[j]);
-                    }
-                    List<Token> l2 = new List<Token>();
-                    for (int j = i + 1; j < tokens.Count; j++)
-                    {
-                        l2.Add(tokens[j]);
-                    }
-
-                    if(tokens.IsTheSameLevel(LV1, i))
-                    {
-                          l1 = new List<Token>();
-                         for (int j = 0; j < i + 2; j++)
-                       {
-                        l1.Add(tokens[j]);
-                        }
-                          l2 = new List<Token>();
-                         for (int j = i + 3; j < tokens.Count; j++)
-                         {
-                        l2.Add(tokens[j]);
-                         }
-
-                         node = new Node(){token = tokens[i + 2], childs = new Node[]{Parse(l1),Parse(l2)}};
-                      return node;
-                    }
-                    //si se encuentra tokens de este nivel, se crea su nodo correspondiente y se parsean sus hijos
-                      node = new Node(){token = tokens[i], childs = new Node[]{Parse(l1),Parse(l2)}};
-                      return node;
-                }
-
-                
-            }
-            //Se realiza el proceso para el nivel 1_1
+            levels.Add(LV0);
+            levels.Add(LV0_1);
+            levels.Add(LV0_2);
+            levels.Add(LV1);
+            levels.Add(LV2);
+            levels.Add(LV2_1);
             
-            p=0;
-            for (int i = 0; i < tokens.Count; i++)
+            levels.Add(LV3);
+            levels.Add(LV4);
+           
+           return ParseLevel(tokens,levels[startlevel - 1],startlevel);
+
+        }
+
+        public static Node ParseLevel(List<Token> tokens, List<string> lvls, int clevel)
+        {
+            List<Token> aux_token_list = new List<Token>();
+            Node? cNode = null;
+           
+
+            
+              
+            if(clevel == 2)
             {
-                //se verifica que no se este tomando terminos que esten dentro de parentesis.
-                //int p = 0;
-                if(tokens[i].Content == "(")
-                p += 1;
-                else if (tokens[i].Content == ")")
+                if(tokens[0].Content == "!")
                 {
-                    p -= 1;
-                }
-                
-                if(LV1_1.Contains(tokens[i].Content) && p == 0 )
-                {
-                    List<Token> l1 = new List<Token>();
-                    for (int j = 0; j < i; j++)
-                    {
-                        l1.Add(tokens[j]);
-                    }
-                    List<Token> l2 = new List<Token>();
-                    for (int j = i + 1; j < tokens.Count; j++)
-                    {
-                        l2.Add(tokens[j]);
-                    }
-
-                    if(tokens.IsTheSameLevel(LV1_1, i))
-                    {
-
-                        int k = tokens.GetMaxIndex(LV1_1,i); // se cambio i+2 => i
-
-                        if(k == -1)
-                        {
-                            k = i + 2;
-                        }
-                        
-                          l1 = new List<Token>();
-                         for (int j = 0; j < k; j++)
-                       {
-                        l1.Add(tokens[j]);
-                        }
-                          l2 = new List<Token>();
-                         for (int j = k + 1; j < tokens.Count; j++)
-                         {
-                             l2.Add(tokens[j]);
-                         }
-
-                         node = new Node(){token = tokens[k], childs = new Node[]{Parse(l1),Parse(l2)}};
-                      return node;
-                    }
-                    //si se encuentra tokens de este nivel, se crea su nodo correspondiente y se parsean sus hijos
-                      node = new Node(){token = tokens[i], childs = new Node[]{Parse(l1),Parse(l2)}};
+                    Node node = new  Node{token = tokens[0], childs = new Node[1]};
+                      tokens.RemoveAt(0);
+                      node.childs[0] = Parse(tokens, 3);
                       return node;
                 }
-
-                
             }
 
-            //en caso de agotar los tokens de primer nivel, se procede a buscar con los de segundo nivel
-             p=0;
-             for (int i = 0; i < tokens.Count; i++)
+            else if(clevel == 8)
             {
-                
-                //se verifica que no se este tomando terminos que esten dentro de parentesis.
-                
-                if(tokens[i].Content == "(")
-                p += 1;
-                else if (tokens[i].Content == ")")
+                if(tokens.Count > 1)
                 {
-                    p -= 1;
+                    throw new ArgumentException();
                 }
 
-                if(LV2.Contains(tokens[i].Content) && p == 0 )
+                else if(tokens[0].Type == "number" || tokens[0].Type == "bool" || tokens[0].Type == "strings")
                 {
-                    List<Token> l1 = new List<Token>();
-                    for (int j = 0; j < i; j++)
-                    {
-                        l1.Add(tokens[j]);
-                    }
-                    List<Token> l2 = new List<Token>();
-                    for (int j = i + 1; j < tokens.Count; j++)
-                    {
-                        l2.Add(tokens[j]);
-                    }
-
-                    if(tokens.IsTheSameLevel(LV2, i))
-                    {
-
-                        int k = tokens.GetMaxIndex(LV2,i+2);
-
-                        if(k == -1)
-                        {
-                            k = i + 2;
-                        }
-                        
-                          l1 = new List<Token>();
-                         for (int j = 0; j < k; j++)
-                       {
-                        l1.Add(tokens[j]);
-                        }
-                          l2 = new List<Token>();
-                         for (int j = k + 1; j < tokens.Count; j++)
-                         {
-                             l2.Add(tokens[j]);
-                         }
-
-                         node = new Node(){token = tokens[k], childs = new Node[]{Parse(l1),Parse(l2)}};
-                      return node;
-                    }
-                    //si se encuentra tokens de este nivel, se crea su nodo correspondiente y se parsean sus hijos
-                      node = new Node(){token = tokens[i], childs = new Node[]{Parse(l1),Parse(l2)}};
-                      return node;
+                   return new Node(){token = tokens[0], IsTerminal = true};
                 }
 
-                
-            }
-
-            //Ahora se buscan los tokens atomicos
-            p=0;
-            for (int i = 0; i < tokens.Count; i++)
-            {
-                //se verifica que no se este tomando terminos que esten dentro de parentesis.
-                //int p = 0;
-                if(tokens[i].Content == "(")
-                p += 1;
-                else if (tokens[i].Content == ")")
+                else if(tokens[0].Content == "cpar")
                 {
-                    p -= 1;
-                }
-
-                if(LV3.Contains(tokens[i].Type) && p == 0 )
-                {
+                    Node node= new Node(){token = tokens[0], childs = new Node[1]};
+                    node.childs[0] = Parse(tokens[0].exp,1);
+                    return node;
                     
-                    //si se encuentra tokens de este nivel, se crea su nodo correspondiente y se parsean sus hijos
-                      node = new Node(){token = tokens[i], IsTerminal = true};
-                      return node;
                 }
 
-                
+                else if(tokens[0].Content == "let-in")
+                {
+                    Node node = new Node(){token = tokens[0]};
+                    return node;
+                }
+
+                else if (tokens[0].Content == "if-else")
+                {
+                    Node node = new Node(){token = tokens[0]};
+                    return node;
+                }
+                else if (tokens[0].Type == "func")
+                {
+                    Node node = new Node(){token = tokens[0]};
+                    return node;
+                }
+
+                else throw new ArgumentException();
             }
 
-            //Ahora se procesan los parentesis
-            p = 0;
-             List<Token> list = new List<Token>();
-             
-             //Verdadero si ya se ha abierto algun parentesis
-             bool Started = false;
             for (int i = 0; i < tokens.Count; i++)
             {
-               
-                //int p = 0;
-                if(tokens[i].Content == "(")
+                if(lvls.Contains(tokens[i].Content))
                 {
-                    p += 1;
-                    if(!Started)
+                    if(tokens[i].Content == "-" && aux_token_list.Count == 0)
                     {
-                        Started = true;
+                        aux_token_list.Add(tokens[i]);
                         continue;
                     }
+                  else  if(cNode == null)
+                   {
+                    Node node = new Node(){token = tokens[i], childs = new Node[2]};
+                   node.childs[0] = Parse(aux_token_list, clevel + 1);
+                   aux_token_list = new List<Token>();
+                   cNode = node;
+                   }
+                   else
+                   {
+                     cNode.childs[1] = Parse(aux_token_list, clevel + 1);
+                     aux_token_list = new List<Token>();
+                     Node aux_node = cNode;
+                     cNode = new Node(){token = tokens[i], childs = new Node[2]};
+                     cNode.childs[0] = aux_node;
+                   }
                 }
-                else if (tokens[i].Content == ")")
-                {
-                    p -= 1;
-                }
+                else aux_token_list.Add(tokens[i]);
 
-                if (p > 0)
-                {
-                    list.Add(tokens[i]);
-                }
-
-                if(p == 0 && list.Count > 0)
-                {
-                    Token tokn = new Token(){Content = "()", Type = "parn"};
-                     node = new Node(){token = tokn, IsTerminal = false, childs = new Node[]{Parse(list)}};
-                     System.Console.WriteLine("candela");
-                     return node;
-                }
+                
+            }
+            if(cNode != null)
+            {
+                cNode.childs[1] = Parse(aux_token_list,clevel + 1);
+            return cNode;
             }
 
-
-
-            return node;
-
+            else return Parse(tokens,clevel + 1);
         }
 
-        private static Node TryParse(this List<Token> tokens,List<string> LVS)
-        {
+        
+
             
-        }
+            //Se realiza el proceso para el nivel 1_1
+               
+        
         
 
         /// /
@@ -253,14 +135,24 @@ namespace Compiler
         ///         /// ///////////////////////////////////////////////////////
         /// ////////////////////////
         /// ///////////////////////////////////
-        static List<string> LV1 = new List<string> {"+"};
-        static List<string> LV1_1 = new List<string> {"-"};
+        static List<List<string>> levels = new List<List<string>>();
+        //static List<string> LV1 = new List<string> {"+"};
         
-        static List<string> LV2 = new List<string> {"*","/"};
+        static List<string> LV0 = new List<string> {"&", "|"};
 
-        static List<string> LV2_1 = new List<string> {"let","in","print"};
+        static List<string> LV0_1 = new List<string> {"!"};
+        static List<string> LV0_2 = new List<string> {"<=",">=","==","!=" , "<" , ">", };
+        static List<string> LV1 = new List<string> {"+","-","@"};
+        
+        static List<string> LV2 = new List<string> {"*","/","%"};
 
-        static List<string> LV3 = new List<string>{"number"};
+        static List<string> LV2_1 = new List<string> {"^"};
+
+        
+        static List<string> LV3 =  new List<string> { "-"};
+        static List<string> LV4 = new List<string> {"let-in","print","number","cpar","bool","if-else","strings","func"};
+
+        //static List<string> LV3 = new List<string>{"number"};
 
         
 
@@ -270,6 +162,42 @@ namespace Compiler
     /// </summary>
         public static bool IsTheSameLevel(this List<Token> tokens,List<string> LV,int index)
         {
+            int p = 0;
+            int counter = 0;
+            for (int i = index + 1; i < tokens.Count; i++)
+            {
+                if(tokens[i].Content == "(")
+                {
+                    p += 1;
+                    continue;
+                }
+                else if(tokens[i].Content == ")")
+                {
+                    p -= 1;
+                    continue;
+                }
+
+                if(p == 0 )
+                {
+                    counter += 1;
+                }
+
+                if(counter == 2 && counter < tokens.Count)
+                {
+                    if(LV.Contains(tokens[i].Content))
+                    {
+                        return true;
+                    }
+
+                    break;
+                }
+
+
+                
+            }
+            return false;    
+             
+            /////////////////////////
             if(index + 2 < tokens.Count)
             {
                 if(LV.Contains(tokens[index + 2].Content))
@@ -296,12 +224,16 @@ namespace Compiler
              {
                 //se verifica que no se este tomando terminos que esten dentro de parentesis.
                 if(tokens[k].Content == "(")
-                p += 1;
+                {
+                    p += 1;
+                continue;
+                }
                 else if (tokens[k].Content == ")")
                 {
                     p -= 1;
+                    continue;
                 }
-               if(k >= index + 2 && p == 0)
+               if(k > index && p == 0 && tokens[k].Type == "Operator")
                { 
                 
                 if(LV.Contains(tokens[k].Content))
@@ -323,20 +255,61 @@ namespace Compiler
         {
             if(IsTerminal)
             return token;
-            else if(token.Content == "+" || token.Content == "-" || token.Content == "*" || token.Content == "/")
+            else if(token.Content == "+" || token.Content == "-" || token.Content == "*" || token.Content == "/" || token.Content == "^" || token.Content == "%")
             {
                 return Operations.BinaryOperation(childs[0].GetValue(),childs[1].GetValue(),token.Content);
 
             }
-            else if(token.Type == "parn" )
+            else if(token.Content == "!")
             {
-                return childs[0].GetValue();
+              return Operations.UnaryNegation(childs[0].GetValue());
+            }
+
+            else if(token.Content == "<=" || token.Content == ">=" || token.Content == "==" || token.Content == "!=" || token.Content == "<" || token.Content == ">"|| token.Content == "&" || token.Content == "|" )
+            {
+                return Operations.LogicOperation(childs[0].GetValue(),childs[1].GetValue(),token.Content);
+            }
+
+            else if(token.Content == "@")
+            {
+                return Operations.StringSum(childs[0].GetValue(),childs[1].GetValue());
+            }
+            else if(token.Type == "mix" )
+            {
+                if(token.Content == "cpar")
+                {
+                    return childs[0].GetValue();
+                }
+                else if(token.Content == "let-in")
+                {
+                    return Operations.LetIn(token);
+                }
+
+                else if (token.Content == "if-else")
+                {
+                    return Operations.IfElse(token);
+                }
+            }
+            else if(token.Type == "func")
+            {
+                 foreach (Function f in Function.ActiveFunctions)
+                 {
+                    if(f.name == token.Content)
+                    {
+                        return f.Call(token.exp[0]);
+                    }
+                    
+                 }
+
+                  throw new ArgumentException("the function " + token.Content + " is not defined");
+
+                 
             }
             throw new ArgumentException("ERROR AT GETVALUE METHOD ON NODE");
         }
         public Node? Parent { get; set;}
 
-        public  bool IsTerminal;
+        public  bool IsTerminal = false;
        
         
         /// <summary>

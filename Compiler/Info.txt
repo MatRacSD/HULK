@@ -5,8 +5,14 @@ Tipos de tokens:
 -iden
 -strings
 -Parnt (parentesis)
+
 -none
 -error
+
+-Tokens Mixtos agregados:
+>cpar //Parenteisis compuesto
+>let-in
+
 Bugs:
 -Al iniciar un token del tipo Sstring se almacena dentro del contenido del token el primer ".
 Implementado:
@@ -17,3 +23,4 @@ NO Implementado:
 -Analisis Semantico.
 SE NECESITA CAMBIAR:
 -Los tokens identificadores no pueden empezar con un numero pero si pueden tener numeros y guiones bajos.
+-Falta agregar que se sobreescriban las variables en la expresion let-in y que funcione con parentesis.
