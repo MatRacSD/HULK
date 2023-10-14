@@ -3,11 +3,14 @@ using System.Security.Principal;
 using System;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Net.NetworkInformation;
 
 namespace Compiler
 {
 
-   
+     /// <summary>
+     /// Representa los objetos que constituyen la entrada del usuario
+     /// </summary>
     public class Token
     {
 
@@ -16,39 +19,44 @@ namespace Compiler
             return Type + "{" + Content + "}";
         }
 
-        public  Token Clone()
+        
+        public Token Clone()
         {
-           Token token = new Token();
-           token.Type = Type;
-           token.Content = Content;
-           token.bool_exp = bool_exp.Clone();
-           token.exp = exp.Clone();
-           token.exp_2 = exp_2.Clone();
-           return token;
+            Token token = new Token();
+            token.Type = Type;
+            token.Content = Content;
+            token.bool_exp = bool_exp.Clone();
+            token.exp = exp.Clone();
+            token.exp_2 = exp_2.Clone();
+            return token;
         }
 
 
-        //
+        /// <summary>
+        /// Se utiliza para en tokens mixtos, remplazar identificadores por valores específicos 
+        /// </summary>
+        /// <param name="vars">Diccionario que contiene el nombre de la variable y un token asociado</param>
         public void Remplace(Dictionary<string, Token> vars)
         {
-            
-          
-             if(Type == "mix" && Content == "cpar")
+             //el tipo mix y el tipo cpar son tipos mixtos, ambos contienen conjuntos de tokens
+             
+
+            if (Type == "mix" && Content == "cpar")
             {
                 for (int i = 0; i < exp.Count; i++)
                 {
-                    
-                    if(exp[i].Type == "iden")
+
+                    if (exp[i].Type == "iden")
                     {
-                        if(vars.ContainsKey(exp[i].Content))
+                        if (vars.ContainsKey(exp[i].Content))
                         {
-                                exp[i] = vars[exp[i].Content];
+                            exp[i] = vars[exp[i].Content];
                         }
                     }
                     else exp[i].Remplace(vars);
                 }
             }
-           else if (Type != "let-in")
+            else if (Type != "let-in")
             {
                 if (Content == "if-else")
                 {
@@ -71,7 +79,7 @@ namespace Compiler
                             }
                         }
 
-                        else if (exp[i].Type == "mix"|| exp[i].Type == "func")
+                        else if (exp[i].Type == "mix" || exp[i].Type == "func")
                         {
                             exp[i].Remplace(vars);
                         }
@@ -134,7 +142,7 @@ namespace Compiler
                     }
                 }
             }
-            else if(Type == "func")
+            else if (Type == "func")
             {
                 exp[0].Remplace(vars);
             }
@@ -158,9 +166,13 @@ namespace Compiler
                 }
             }
 
-            
+
         }
 
+
+/// <summary>
+/// De ser posible, convierte el token acutal de identificador a bool
+/// </summary> 
         public void TryConvertToBool()
         {
             if (Type == "iden")
@@ -173,24 +185,71 @@ namespace Compiler
 
             }
         }
+/// <summary>
+/// De ser posible, convierte el token acutal de identificador a constante
+/// </summary> 
+        public void TryConvertToConst()
+        {
+            if (Type == "iden")
+            {
+                if (Content == "PI")
+                {
+                    Type = "number";
+                    Content = Math.PI.ToString();
+                }
+                else if (Content == "E")
+                {
+                    Type = "number";
+                    Content = Math.E.ToString();
+                }
 
 
-        public bool IsSimple;
+            }
+        }
+
+
+        /// <summary>
+        /// Representa el tipo de token
+        /// </summary>
         public string? Type;
+
+        /// <summary>
+        /// Representa el contenido del token
+        /// </summary>
         public string? Content;
 
+        /// <summary>
+        /// Lista de tokens que contiene los valores de la condición del if en un token del tipo if-else
+        /// </summary>
+
         public List<Token>? bool_exp = null;
+
+        /// <summary>
+        /// Contiene valores, usado en tokens mixtos.
+        /// </summary> 
         public List<Token>? exp = null;
+
+         /// <summary>
+        /// Contiene valores, usado en tokens mixtos que tiene varios cuerpos, como los tokens if-else, let-in
+        /// </summary> 
         public List<Token>? exp_2 = null;
     }
 
     public static class Lexer
     {
 
+
+        /// <summary>
+        /// Retorna una lista de tokens a partir del input del usuario
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public static List<Token> TokensInit(string input)
         {
             List<Token> tlist = new List<Token>();
             Token? currentToken = null;
+
+
 
             for (int i = 0; i < input.Length; i++)
             {
@@ -198,7 +257,7 @@ namespace Compiler
                 {
                     if (state == "strings")
                     {
-                        //currentToken.Content += '"';
+                        
                         tlist.Add(currentToken);
                         currentToken = null;
                         state = "none";
@@ -214,6 +273,11 @@ namespace Compiler
                 else if (state == "strings")
                 {
                     currentToken.Content += input[i];
+                    if(input[i] != '"' && i == input.Length - 1)
+                    {
+                        Error.errors.Add(new Error(){Type = "LEXICAL ERROR", Content = '"'.ToString() + "expected" });
+                        return null;
+                    }
                     continue;
                 }
 
@@ -240,8 +304,8 @@ namespace Compiler
                     else if (state == "number")
                     {
                         string token = currentToken.Content;
-                        currentToken = new Token { Type = "LEXICAL ERROR:" + token + " INVALID TOKEN" };
-                        return new List<Token> { currentToken };
+                        Error.errors.Add(new Error { Type = "LEXICAL ERROR:" + token + " INVALID TOKEN" });
+                        return null;
                     }
                 }
 
@@ -266,9 +330,7 @@ namespace Compiler
                     }
                     else if (state == "iden")
                     {
-                        string token = currentToken.Content;
-                        currentToken = new Token { Type = "LEXICAL ERROR:" + token + " INVALID TOKEN" };
-                        return new List<Token> { currentToken };
+                        currentToken.Content = currentToken.Content + input[i];
                     }
                 }
 
@@ -312,14 +374,14 @@ namespace Compiler
                 {
                     if (state == "Operator")
                     {
-                        if (true)
+                        if (currentToken.Content.Length < 2)
                             currentToken.Content += "=";
                         else
                         {
 
                             string token = currentToken.Content;
-                            currentToken = new Token { Type = "LEXICAL ERROR:" + token + " INVALID TOKEN CANDELA---" };
-                            return new List<Token> { currentToken };
+                            Error.errors.Add(new Error { Type = "LEXICAL ERROR:" + token + " INVALID TOKEN" });
+                            return null;
                         }
                     }
                     else
@@ -356,6 +418,19 @@ namespace Compiler
                     state = "none";
                 }
 
+                else if (input[i] == ';')
+                {
+                    if (state != "none")
+                    {
+                        tlist.Add(currentToken);
+                        currentToken = null;
+                        
+                    }
+                    tlist.Add(new Token() { Type = "Symbol", Content = ";" });
+                    state = "none";
+                    
+                }
+
 
             }
 
@@ -363,8 +438,19 @@ namespace Compiler
             {
                 tlist.Add(currentToken);
             }
-
-            currentToken = null;
+            Token tk = new Token() { Type = "Symbol", Content = ";"};
+            if(tlist.Count == 0)
+            {
+                return new List<Token>();
+            }
+            if(tlist.Last().Content != ";" )
+            {
+                 Error.errors.Add(new Error(){Type = "SYNTAX ERROR: uso incorrecto de ; "});
+                 return null;
+            }
+            
+            tlist.RemoveAt(tlist.Count - 1);
+            
             state = "none";
             return tlist;
         }
@@ -385,6 +471,7 @@ namespace Compiler
             for (int i = 0; i < tokens.Count; i++)
             {
                 tokens[i].TryConvertToBool();
+                tokens[i].TryConvertToConst();
                 if (tokens[i].Content == "(")
                 {
                     p += 1;
@@ -412,7 +499,13 @@ namespace Compiler
                         continue;
                     }
 
-                    else if (p < 0) throw new ArgumentException("INVALID ) TOKEN");
+                    else if (p < 0)
+                    {
+                        Error.errors.Add(new Error(){Type = "SYNTAX ERROR: uso incorrecto de )"});
+                        return null;
+                    }
+
+                    //else if (p < 0) throw new ArgumentException("INVALID ) TOKEN");
 
                     else cToken.exp.Add(tokens[i]);
                 }
@@ -429,6 +522,14 @@ namespace Compiler
                     continue;
                 }
 
+
+             
+            }
+
+            if(IsOpen)
+            {
+                Error.errors.Add(new Error(){Type = "SYNTAX ERROR: expected )"});
+                        return null;
             }
 
             //Se resetean los datos
@@ -455,7 +556,9 @@ namespace Compiler
                     }
                     else if (toks_aux[i].Content == "in")
                     {
-                        throw new ArgumentException("INVALID USE OF RESERVED WORD in");
+                        Error.errors.Add(new Error(){Type = "SYNTAX ERROR: la palabra reservada in debe ir despues de let en una expresion let-in"});
+                        return null;
+                        //throw new ArgumentException("INVALID USE OF RESERVED WORD in");
                     }
                     else toks.Add(toks_aux[i]);
                     continue;
@@ -481,6 +584,11 @@ namespace Compiler
                 }
 
 
+            }
+            if(part == 1)
+            {
+                Error.errors.Add(new Error(){Type = "SYNTAX ERROR: falta palabra reservada in  en una expresion let-in"});
+                        return null;
             }
             if (IsOpen)
             {
@@ -516,7 +624,8 @@ namespace Compiler
                     }
                     else if (toks_aux[i].Content == "else")
                     {
-                        throw new ArgumentException("INVALID USE OF RESERVED WORD else ");
+                        Error.errors.Add(new Error(){Type = "SYNTAX ERROR: la palabra reservada else debe ir despues de if en una expresion if-else"});
+                        return null;
                     }
                     else toks.Add(toks_aux[i]);
                     continue;
@@ -531,7 +640,8 @@ namespace Compiler
                             part = 2;
                             continue;
                         }
-                        else throw new ArgumentException("missing () expression");
+                        Error.errors.Add(new Error(){Type = "SYNTAX ERROR: la expresion booleana debe ir entre parentesis"});
+                        return null;
                     }
                     if (part == 2)
                     {
@@ -562,7 +672,7 @@ namespace Compiler
                 IsOpen = false;
             }
 
-             cToken = null;
+            cToken = null;
             IsOpen = false;
             toks_aux = toks;
             toks = new List<Token>();
@@ -571,13 +681,13 @@ namespace Compiler
             //Se inician las funciones
             for (int i = 0; i < toks_aux.Count; i++)
             {
-                if(toks_aux[i].Type == "iden" && i + 1 < toks_aux.Count  && toks_aux[i + 1].Content == "cpar")
+                if (toks_aux[i].Type == "iden" && i + 1 < toks_aux.Count && toks_aux[i + 1].Content == "cpar")
                 {
-                    Token tk = new Token(){Type = "func", Content = toks_aux[i].Content,exp = new List<Token>(){toks_aux[i + 1]}};
+                    Token tk = new Token() { Type = "func", Content = toks_aux[i].Content, exp = new List<Token>() { toks_aux[i + 1] } };
                     i += 1;
                     toks.Add(tk);
                 }
-                  else toks.Add(toks_aux[i]); 
+                else toks.Add(toks_aux[i]);
             }
 
             return toks;
@@ -585,7 +695,7 @@ namespace Compiler
 
         }
 
-        //static Token? currentToken = null;
+        
         static string state = "none";
     }
 }

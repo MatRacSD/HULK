@@ -3,23 +3,28 @@ namespace Compiler
 {
     public static class Operations
     {
-        private static double ToInt(this Token t)
+        public static double ToInt(this Token t)
         {
             if (t.Type != "number")
             {
-                throw new ArgumentException("Cannot convert the token Content to int in class Operations due to an invalid token type");
+                Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: en ToInt()" });
+                return 0;
+                // throw new ArgumentException("Cannot convert the token Content to int in class Operations due to an invalid token type");
             }
             return double.Parse(t.Content);
         }
-        public static Token BinaryOperation(Token t1, Token t2, string op)
+        public static Token? BinaryOperation(Token t1, Token t2, string op)
         {
             if (t1.Type != "number")
             {
-                return new Token { Type = "error", Content = "SYNTAX ERROR: " + t1.Content + " must be a number" };
+                Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: tipo invalido " + t1.Content + " debe ser un numero" });
+                return null;
+
             }
             else if (t2.Type != "number")
             {
-                return new Token { Type = "error", Content = "SYNTAX ERROR: " + t2.Content + " must be a number" };
+                Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: tipo invalido " + t2.Content + "debe ser un numero" });
+                return null;
             }
             if (op == "+")
             {
@@ -45,7 +50,7 @@ namespace Compiler
             {
                 return new Token { Type = "number", Content = (t1.ToInt() % t2.ToInt()).ToString() };
             }
-            
+
 
             return null;
         }
@@ -55,14 +60,18 @@ namespace Compiler
 
             if (t1.Type != t2.Type && (t1.Type == "number" || t1.Type == "bool" || t1.Type == "strings"))
             {
-                throw new ArgumentException("invalid use of " + op + " operator cause tokens " + t1 + " and " + "t2" + t2 + "arent the same");
+                Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: invalid use of " + op + " operator cause tokens " + t1 + " and " + t2 + "arent the same" });
+                return null;
+                //throw new ArgumentException("invalid use of " + op + " operator cause tokens " + t1 + " and " + "t2" + t2 + "arent the same");
 
             }
             else if (op == "==")
             {
                 if (t1.Type == "bool")
                 {
-                    throw new ArgumentException("invalid bool token in ==");
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador == no se puede aplicar a tokens del  tipo bool" });
+                    return null;
+                    //throw new ArgumentException("invalid bool token in ==");
                 }
                 else
                 {
@@ -72,9 +81,9 @@ namespace Compiler
                         token.Content = "true";
                     }
                     else
-                     { 
+                    {
                         token.Content = "false";
-                     }
+                    }
                     return token;
                 }
             }
@@ -83,7 +92,9 @@ namespace Compiler
             {
                 if (t1.Type == "bool")
                 {
-                    throw new ArgumentException("invalid bool token in !=");
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador != no se puede aplicar a tokens del  tipo bool" });
+                    return null;
+                    //throw new ArgumentException("invalid bool token in !=");
                 }
                 else
                 {
@@ -93,9 +104,9 @@ namespace Compiler
                         token.Content = "false";
                     }
                     else
-                     { 
+                    {
                         token.Content = "true";
-                     }
+                    }
                     return token;
                 }
             }
@@ -104,7 +115,8 @@ namespace Compiler
             {
                 if (t1.Type == "bool" || t1.Type == "strings")
                 {
-                    throw new ArgumentException("invalid bool token in >");
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador > no se puede aplicar a tokens del  tipo: " + t1.Type });
+                    return null;
                 }
                 else
                 {
@@ -114,18 +126,19 @@ namespace Compiler
                         token.Content = "true";
                     }
                     else
-                     { 
+                    {
                         token.Content = "false";
-                     }
+                    }
                     return token;
                 }
             }
 
-              else if (op == "<")
+            else if (op == "<")
             {
                 if (t1.Type == "bool" || t1.Type == "strings")
                 {
-                    throw new ArgumentException("invalid bool token in <");
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador < no se puede aplicar a tokens del  tipo: " + t1.Type });
+                    return null;
                 }
                 else
                 {
@@ -135,18 +148,19 @@ namespace Compiler
                         token.Content = "true";
                     }
                     else
-                     { 
+                    {
                         token.Content = "false";
-                     }
+                    }
                     return token;
                 }
             }
 
-              else if (op == ">=")
+            else if (op == ">=")
             {
                 if (t1.Type == "bool" || t1.Type == "strings")
                 {
-                    throw new ArgumentException("invalid bool token in >=");
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador >= no se puede aplicar a tokens del  tipo: " + t1.Type });
+                    return null; ;
                 }
                 else
                 {
@@ -156,17 +170,18 @@ namespace Compiler
                         token.Content = "true";
                     }
                     else
-                     { 
+                    {
                         token.Content = "false";
-                     }
+                    }
                     return token;
                 }
             }
-              else if (op == "<=")
+            else if (op == "<=")
             {
                 if (t1.Type == "bool" || t1.Type == "strings")
                 {
-                    throw new ArgumentException("invalid bool token in <");
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador <= no se puede aplicar a tokens del  tipo: " + t1.Type });
+                    return null; ;
                 }
                 else
                 {
@@ -176,44 +191,46 @@ namespace Compiler
                         token.Content = "true";
                     }
                     else
-                     { 
+                    {
                         token.Content = "false";
-                     }
+                    }
                     return token;
                 }
             }
 
-            else if(op == "&")
+            else if (op == "&")
             {
-                if(t1.Type != "bool")
+                if (t1.Type != "bool")
                 {
-                    throw new ArgumentException("ERROR AT &");
-                    
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador & no se puede aplicar a tokens del  tipo: " + t1.Type });
+                    return null; ;
+
                 }
-                
-                else if(bool.Parse(t1.Content) && bool.Parse(t2.Content))
+
+                else if (bool.Parse(t1.Content) && bool.Parse(t2.Content))
                 {
-                     return new Token{Type = "bool", Content = "true"};
+                    return new Token { Type = "bool", Content = "true" };
                 }
-                else return new Token{Type = "bool", Content = "false"};
+                else return new Token { Type = "bool", Content = "false" };
             }
 
-            else if(op == "|")
+            else if (op == "|")
             {
-                if(t1.Type != "bool")
+                if (t1.Type != "bool")
                 {
-                    throw new ArgumentException("ERROR AT &");
-                    
+                    Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador | no se puede aplicar a tokens del  tipo: " + t1.Type });
+                    return null; ;
+
                 }
-                
-                else if(bool.Parse(t1.Content) || bool.Parse(t2.Content))
+
+                else if (bool.Parse(t1.Content) || bool.Parse(t2.Content))
                 {
-                     return new Token{Type = "bool", Content = "true"};
+                    return new Token { Type = "bool", Content = "true" };
                 }
-                else return new Token{Type = "bool", Content = "false"};
+                else return new Token { Type = "bool", Content = "false" };
             }
-           throw new ArgumentException("Invalid op");
-        
+            throw new ArgumentException("Invalid op");
+
         }
 
         public static Token LetIn(Token token)
@@ -225,10 +242,6 @@ namespace Compiler
             int count = 0;
 
 
-            if (token.Content != "let-in")
-            {
-                throw new ArgumentException("INVALID TOKEN AT LetIn Function, EXPECTED: let-in token");
-            }
 
             //Se guardan las respectivas variables
 
@@ -238,7 +251,9 @@ namespace Compiler
                 {
                     if (token.exp[i].Type != "iden")
                     {
-                        throw new ArgumentException("INVALID TOKEN in let in expresion");
+                        Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: token:  " + token.exp[i] + " inválido, se esperaba identificador en let-in expresion" });
+                        return null;
+                        //throw new ArgumentException("INVALID TOKEN in let in expresion");
                     }
 
                     else
@@ -253,7 +268,9 @@ namespace Compiler
                 {
                     if (token.exp[i].Content != "=")
                     {
-                        throw new ArgumentException("EXPECTED = IN let-in expresion");
+                        Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: se esperaba = en let-in expresión" });
+                        return null;
+                        //throw new ArgumentException("EXPECTED = IN let-in expresion");
 
                     }
                     else
@@ -326,7 +343,7 @@ namespace Compiler
                         token.exp_2[i] = vars[token.exp_2[i].Content];
                     }
                 }
-                else if (token.exp_2[i].Type == "mix" || token.exp_2[i].Type == "func" )
+                else if (token.exp_2[i].Type == "mix" || token.exp_2[i].Type == "func")
                 {
 
                     token.exp_2[i].Remplace(vars);
@@ -341,7 +358,7 @@ namespace Compiler
 
         public static Token IfElse(Token token)
         {
-            string tbool = Parser.Parse(token.bool_exp, 1).GetValue().Content.ToString();
+            string tbool = Parser.Parse(token.bool_exp, 1).GetValue().Content.ToString().ToLower();
             if (token.Content != "if-else")
             {
                 throw new ArgumentException();
@@ -357,57 +374,57 @@ namespace Compiler
                 return Parser.Parse(token.exp_2, 1).GetValue();
             }
 
-            throw new ArgumentException();
+            Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: se esperaba un bool en la condicion de la expresión if-else" });
+            return null;
         }
 
         public static Token StringSum(Token token_1, Token token_2)
         {
             if (token_1.Type != "strings" && token_1.Type != "number")
             {
-                throw new ArgumentException("expected string token at left @ operator");
+                Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: se esperaba un string o un numero en el operador @" });
+                return null;
+
             }
 
             else if (token_2.Type == "number" || token_2.Type == "strings")
             {
                 return new Token() { Type = "strings", Content = token_1.Content + token_2.Content };
             }
+            else
+            {
+                Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: se esperaba un string o un numero en el operador @" });
+                return null;
+            }
 
-            else throw new ArgumentException("invalid token: " + token_2 + " at @ right ");
         }
 
         public static Token UnaryNegation(Token token)
         {
-            if(token.Type != "bool")
+            if (token.Type != "bool")
             {
-                throw new ArgumentException("expected bool");
+                 Error.errors.Add(new Error() { Type = "SEMANTIC ERROR: el operador ! solo se puede aplicar a bool" });
+                return null;
             }
-            return new Token(){Type = "bool", Content = (!bool.Parse(token.Content)).ToString().ToLower()};
+            return new Token() { Type = "bool", Content = (!bool.Parse(token.Content)).ToString().ToLower() };
         }
-        public static Token UnaryMinus(Token token)
-        {
-            if(token.Type != "number")
-            {
-                throw new ArgumentException();
-            }
-
-            return new Token(){Type = "number" , Content = (-(token.ToInt())).ToString()};
-        }
+        
 
         public static List<Token> Clone(this List<Token> tokens)
         {
-           List<Token> tokns = new List<Token>();
-           
-           if(tokens == null)
-           {
-            return null;
-           }
+            List<Token> tokns = new List<Token>();
 
-           foreach (Token item in tokens)
-           {
-               tokns.Add(item.Clone());
-           }
+            if (tokens == null)
+            {
+                return null;
+            }
 
-           return tokns;
+            foreach (Token item in tokens)
+            {
+                tokns.Add(item.Clone());
+            }
+
+            return tokns;
         }
     }
 }
